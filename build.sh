@@ -1,6 +1,6 @@
 #!/bin/bash
 # ./build.sh [version]   builds packages/menumanager-<version>.txz and stamps
-# menumanager.plg with the version, md5 and CHANGELOG.md
+# menumanager.plg with the version, SHA-256 and CHANGELOG.md
 set -e
 NAME=menumanager
 VERSION="${1:-$(date +%Y.%m.%d)}"
@@ -18,18 +18,18 @@ chmod 755 "package-temp/usr/local/emhttp/plugins/$NAME/event/started"
 COPYFILE_DISABLE=1 tar -C package-temp -cJf "packages/$NAME-$VERSION.txz" usr
 rm -rf package-temp
 
-if command -v md5sum >/dev/null; then MD5=$(md5sum "packages/$NAME-$VERSION.txz" | cut -d' ' -f1); else MD5=$(md5 -q "packages/$NAME-$VERSION.txz"); fi
+if command -v sha256sum >/dev/null; then SHA256=$(sha256sum "packages/$NAME-$VERSION.txz" | cut -d' ' -f1); else SHA256=$(shasum -a 256 "packages/$NAME-$VERSION.txz" | cut -d' ' -f1); fi
 
 # the plg ships the changelog; "]]>" is the one string that would end the CDATA early
-python3 - "$VERSION" "$MD5" <<'PY'
+python3 - "$VERSION" "$SHA256" <<'PY'
 import re, sys
-version, md5 = sys.argv[1:3]
+version, sha256 = sys.argv[1:3]
 s = open('menumanager.plg').read()
 log = open('CHANGELOG.md').read().replace(']]>', ']]]]><![CDATA[>')
 s = re.sub(r'<!ENTITY version "[^"]*">', f'<!ENTITY version "{version}">', s)
-s = re.sub(r'<!ENTITY md5 "[^"]*">', f'<!ENTITY md5 "{md5}">', s)
+s = re.sub(r'<!ENTITY sha256 "[^"]*">', f'<!ENTITY sha256 "{sha256}">', s)
 s = re.sub(r'(<CHANGES><!\[CDATA\[\n).*?(\n\]\]></CHANGES>)', lambda m: m.group(1) + log.strip() + m.group(2), s, flags=re.S)
 open('menumanager.plg', 'w').write(s)
 PY
 python3 -c "import xml.etree.ElementTree as E; E.parse('menumanager.plg')"
-echo "built packages/$NAME-$VERSION.txz (md5 $MD5)"
+echo "built packages/$NAME-$VERSION.txz (sha256 $SHA256)"

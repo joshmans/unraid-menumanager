@@ -5,7 +5,7 @@
  <!ENTITY version "2026.09.19d">
  <!ENTITY gitURL "https://github.com/joshmans/unraid-menumanager">
  <!ENTITY pluginURL "&gitURL;/releases/download/&version;/&name;-&version;.txz">
- <!ENTITY md5 "ca631b5cc6a38a7481917c88747267ac">
+ <!ENTITY sha256 "b2780ed90bf736373b63b652894c35c5dbfe6cc9b04f8636bfbad1b53ea55eb2">
  <!ENTITY launch "Settings/MenuManager">
 ]>
 
@@ -36,7 +36,7 @@ First release.
 
 <FILE Name="/boot/config/plugins/&name;/&name;-&version;.txz" Run="upgradepkg --install-new">
 <URL>&pluginURL;</URL>
-<MD5>&md5;</MD5>
+<SHA256>&sha256;</SHA256>
 </FILE>
 
 <FILE Run="/bin/bash">
