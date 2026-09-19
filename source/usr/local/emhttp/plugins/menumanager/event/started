@@ -1,0 +1,3 @@
+#!/bin/bash
+# emhttp runs this when the array starts, by then every plugin has installed its pages.
+php -q /usr/local/emhttp/plugins/menumanager/scripts/apply.php apply --quiet

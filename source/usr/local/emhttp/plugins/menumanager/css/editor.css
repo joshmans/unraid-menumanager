@@ -1,0 +1,28 @@
+#mm-app { max-width: 1200px; }
+#mm-app .mm-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
+#mm-app .mm-status { opacity: .8; }
+#mm-app .mm-status.dirty { color: #d9822b; opacity: 1; }
+#mm-app .mm-warn { border: 1px solid #d9822b; border-radius: 4px; padding: 6px 10px; margin: 0 0 12px; }
+#mm-app .mm-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; align-items: start; }
+#mm-app .mm-col > h3 { margin: 0 0 8px; }
+#mm-app .mm-group { border: 1px solid rgba(128,128,128,.45); border-radius: 6px; margin: 0 0 12px; }
+#mm-app .mm-group.hidden { opacity: .55; }
+#mm-app .mm-group.dragover, #mm-app .mm-col.dragover { outline: 2px dashed #d9822b; }
+#mm-app .mm-ghead { display: flex; align-items: center; gap: 4px; padding: 6px 8px; background: rgba(128,128,128,.15); border-radius: 6px 6px 0 0; }
+#mm-app .mm-ghead b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+#mm-app .mm-badge { font-size: .8em; border: 1px solid rgba(128,128,128,.6); border-radius: 8px; padding: 0 6px; }
+#mm-app .mm-tiles { min-height: 30px; padding: 4px 8px 6px; }
+#mm-app .mm-tile { display: flex; align-items: center; gap: 4px; padding: 3px 4px; border-radius: 4px; cursor: grab; }
+#mm-app .mm-tile:hover { background: rgba(128,128,128,.15); }
+#mm-app .mm-tile.hidden .mm-ttitle { text-decoration: line-through; opacity: .6; }
+#mm-app .mm-tile.dragging { opacity: .35; }
+#mm-app .mm-tile.dropbefore { box-shadow: 0 -2px 0 #d9822b; }
+#mm-app .mm-ttitle { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#mm-app .mm-plugin { opacity: .55; font-size: .85em; }
+#mm-app button.mm-i { margin: 0; padding: 0 6px; min-width: 0; line-height: 1.6; }
+#mm-app select.mm-move { margin: 0; width: 26px; padding: 0; min-width: 0; }
+#mm-app .mm-hub { border: 1px solid rgba(128,128,128,.45); border-radius: 6px; padding: 8px 12px; margin: 16px 0; }
+#mm-app .mm-hub label { display: block; margin: 6px 0; }
+#mm-app .mm-hub input[type=text], #mm-app .mm-hub input[type=number] { width: 220px; }
+#mm-app .mm-note { opacity: .75; font-size: .9em; }
+#mm-app .mm-danger { color: #d9534f; }

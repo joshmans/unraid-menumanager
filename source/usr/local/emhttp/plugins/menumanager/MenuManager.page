@@ -1,0 +1,6 @@
+Menu="Utilities"
+Title="Menu Manager"
+Icon="th-large"
+Tag="th-large"
+---
+<?PHP require_once "/usr/local/emhttp/plugins/menumanager/include/editor.php"; ?>

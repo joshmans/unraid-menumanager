@@ -1,0 +1,59 @@
+<?xml version='1.0' standalone='yes'?>
+<!DOCTYPE PLUGIN [
+ <!ENTITY name "menumanager">
+ <!ENTITY author "joshmans">
+ <!ENTITY version "0000.00.00">
+ <!ENTITY gitURL "https://github.com/joshmans/unraid-menumanager">
+ <!ENTITY pluginURL "&gitURL;/releases/download/&version;/&name;-&version;.txz">
+ <!ENTITY md5 "00000000000000000000000000000000">
+ <!ENTITY launch "Settings/MenuManager">
+]>
+
+<PLUGIN name="&name;" Title="Menu Manager" author="&author;" version="&version;" pluginURL="&gitURL;/raw/main/&name;.plg" launch="&launch;" icon="th-large" min="7.2.0" support="&gitURL;/issues">
+
+<DESCRIPTION>
+Decide where every tile lives. Reorder and rename the categories on the Tools and Settings pages, create your own, move tiles (or whole categories) between Tools and Settings, hide what you never use, and optionally put everything on one unified page in the main menu.
+</DESCRIPTION>
+
+<CHANGES><![CDATA[
+CHANGES_PLACEHOLDER
+]]></CHANGES>
+
+<FILE Name="/boot/config/plugins/&name;/&name;-&version;.txz" Run="upgradepkg --install-new">
+<URL>&pluginURL;</URL>
+<MD5>&md5;</MD5>
+</FILE>
+
+<FILE Run="/bin/bash">
+<INLINE>
+mkdir -p /boot/config/plugins/&name;
+
+# upgradepkg keeps whatever modes the archive had, so set them here
+chown -R root:root /usr/local/emhttp/plugins/&name;
+chmod -R 755 /usr/local/emhttp/plugins/&name;
+find /usr/local/emhttp/plugins/&name; -type f -exec chmod 644 {} \;
+chmod 755 /usr/local/emhttp/plugins/&name;/event/started
+
+# /usr/local/emhttp is RAM: a reboot or another plugin's update puts the original
+# menus back, so re-apply the saved layout every minute as well as at boot
+printf '%s\n' '* * * * * php -q /usr/local/emhttp/plugins/&name;/scripts/apply.php apply --quiet &gt;/dev/null 2&gt;&amp;1' > /boot/config/plugins/&name;/&name;.cron
+/usr/local/sbin/update_cron 2>/dev/null
+
+php -q /usr/local/emhttp/plugins/&name;/scripts/apply.php apply --quiet
+rm -f $(ls /boot/config/plugins/&name;/&name;-*.txz 2>/dev/null | grep -v "&version;")
+echo "Menu Manager &version; installed"
+</INLINE>
+</FILE>
+
+<FILE Run="/bin/bash" Method="remove">
+<INLINE>
+# give every tile back to where its plugin put it before the code goes away
+php -q /usr/local/emhttp/plugins/&name;/scripts/apply.php revert --quiet
+rm -f /boot/config/plugins/&name;/&name;.cron /boot/config/plugins/&name;/&name;-*.txz
+/usr/local/sbin/update_cron 2>/dev/null
+rm -rf /usr/local/emhttp/plugins/&name;
+# the saved layout (layout.json) is kept so a reinstall picks up where you left off
+</INLINE>
+</FILE>
+
+</PLUGIN>

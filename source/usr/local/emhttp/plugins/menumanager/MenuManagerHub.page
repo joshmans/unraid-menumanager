@@ -1,0 +1,10 @@
+Menu=""
+Title="Control Center"
+Code="e909"
+Type="xmenu"
+Tabs="false"
+---
+<?PHP
+require_once "/usr/local/emhttp/plugins/menumanager/include/hub.php";
+mm_render_hub();
+?>
