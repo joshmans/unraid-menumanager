@@ -18,25 +18,64 @@ function mm_menu_parts(string $menu): ?array {
     return [$p[0], $p[1] ?? ''];
 }
 
-/** A page may list several menus ("Utilities Buttons"). Find the first token
- *  that names one of our categories so only that token gets edited. Menus that
- *  start with "$var" or "/file KEY=default" are indirect and left alone. */
-function mm_find_token(string $menu, array $groups): ?array {
-    $menu = trim($menu);
-    if ($menu === '' || $menu[0] === '$' || $menu[0] === '/') return null;
-    $tokens = preg_split('/\s+/', $menu);
-    foreach ($tokens as $i => $tok) {
-        $p = explode(':', $tok, 2);
-        if (isset($groups[$p[0]])) return ['index' => $i, 'group' => $p[0], 'rank' => $p[1] ?? '', 'tokens' => $tokens];
-    }
-    return null;
+/** parse_ini_file, replaceable so the tests don't need a real /boot */
+function mm_read_ini(string $file) {
+    $hook = $GLOBALS['mm_read_ini_hook'] ?? null;
+    return $hook ? $hook($file) : @parse_ini_file($file);
 }
 
-/** Swap (or drop, with null) one token of a multi-menu value. */
-function mm_menu_rebuild(array $tokens, int $index, ?string $new): string {
-    if ($new === null) unset($tokens[$index]);
-    else $tokens[$index] = $new;
-    return implode(' ', $tokens);
+/** Split a Menu value into tokens and resolve an indirect first token the way
+ *  webgui's find_pages() does:
+ *    "/path/file.cfg KEY=default"  reads KEY from the ini file
+ *    "$display[x] default"         evaluates a PHP variable (we can't, so the
+ *                                  default is used and 'indirect' is "var")
+ *  The two tokens of an indirect spec become one resolved token; whatever
+ *  follows is kept. */
+function mm_resolve_menu(string $menu): array {
+    $raw = preg_split('/\s+/', trim($menu), -1, PREG_SPLIT_NO_EMPTY);
+    $out = ['raw' => $raw, 'tokens' => $raw, 'indirect' => null];
+    if (!$raw || ($raw[0][0] !== '$' && $raw[0][0] !== '/')) return $out;
+    $default = $raw[1] ?? '';
+    if ($raw[0][0] === '/') {
+        $kv = explode('=', $default, 2);
+        $vars = mm_read_ini($raw[0]);
+        $value = is_array($vars) && isset($vars[$kv[0]]) ? (string)$vars[$kv[0]] : ($kv[1] ?? '');
+        $kind = 'file';
+    } else {
+        $value = $default;
+        $kind = 'var';
+    }
+    $out['tokens'] = array_merge([$value], array_slice($raw, 2));   // an empty value keeps its slot so indexes still line up with $raw
+    $out['indirect'] = $kind;
+    return $out;
+}
+
+/** Which token of a page's Menu names one of our categories. Pages that name
+ *  none are not tiles, except indirect ones, which come back with group null
+ *  ("not in a category") so the user can still place them. */
+function mm_find_token(string $menu, array $groups): ?array {
+    $r = mm_resolve_menu($menu);
+    foreach ($r['tokens'] as $i => $tok) {
+        $p = explode(':', $tok, 2);
+        if (isset($groups[$p[0]])) return $r + ['index' => $i, 'group' => $p[0], 'rank' => $p[1] ?? ''];
+    }
+    return $r['indirect'] ? $r + ['index' => -1, 'group' => null, 'rank' => ''] : null;
+}
+
+/** Swap (or drop, with null) the category token of a page's Menu. An indirect
+ *  spec that gets replaced is replaced whole: the tile then no longer follows
+ *  the plugin's own setting until the layout is reset. */
+function mm_menu_rebuild(array $info, ?string $new): string {
+    $raw = $info['raw'];
+    $i = $info['index'];
+    if ($info['indirect'] && $i <= 0) {
+        $rest = array_slice($raw, 2);
+        return implode(' ', $new === null ? $rest : array_merge([$new], $rest));
+    }
+    $at = $info['indirect'] ? $i + 1 : $i;
+    if ($new === null) unset($raw[$at]);
+    else $raw[$at] = $new;
+    return implode(' ', $raw);
 }
 
 /** The order Unraid lists a menu's children in: ksort(NATURAL) on rank.name */
@@ -107,7 +146,7 @@ function mm_model(array $pages): array {
         $tiles[$name] = [
             'name' => $name, 'title' => mm_display_title((string)($h['Title'] ?? $name)),
             'group' => $f['group'], 'rank' => $f['rank'], 'plugin' => $p['plugin'],
-            'menu' => (string)$h['Menu'], 'tokens' => $f['tokens'], 'index' => $f['index'],
+            'menu' => (string)$h['Menu'], 'info' => $f,
         ];
     }
     return ['groups' => $groups, 'tiles' => $tiles];

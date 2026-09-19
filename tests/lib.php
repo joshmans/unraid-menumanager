@@ -49,6 +49,8 @@ function mm_fixture(): string {
         'baz/BazDash.page'             => "Menu=\"Dashboard:0\"\n---\nwidget\n",
         'baz/BazMulti.page'            => "Menu=\"Utilities Buttons\"\nTitle=\"Baz Multi\"\n---\nx\n",
         'baz/BazDyn.page'              => "Menu=\"/boot/config/plugins/baz/baz.cfg MENU=Utilities\"\nTitle=\"Baz Dyn\"\n---\nx\n",
+        'baz/BazVar.page'              => "Menu=\"\$display[nav] Utilities\"\nTitle=\"Baz Var\"\n---\nx\n",
+        'baz/BazNone.page'             => "Menu=\"/boot/config/plugins/baz/none.cfg MENU=Elsewhere\"\nTitle=\"Baz None\"\n---\nx\n",
         'qux/QuxOne.page'              => "Menu=\"DiskUtilities:2\"\nTitle=\"Qux One\"\n---\nx\n",
         'menumanager/MenuManager.page' => "Menu=\"Utilities\"\nTitle=\"Menu Manager\"\n---\nx\n",
         'menumanager/MenuManagerHub.page' => "Menu=\"\"\nTitle=\"Control Center\"\nCode=\"e909\"\nType=\"xmenu\"\nTabs=\"false\"\n---\nhub\n",
@@ -93,8 +95,15 @@ function unraid_find_pages(array $site, string $item): array {
     foreach ($site as $page) {
         if (empty($page['Menu'])) continue;
         $menu = strtok($page['Menu'], ' ');
-        if ($menu[0] === '$' || $menu[0] === '/') continue;   // not simulated
-        while ($menu !== false) {
+        switch ($menu[0]) {   // get_ini_key / get_file_key; a $var can't be evaluated here, so its default
+            case '$': $menu = strtok(' '); break;
+            case '/':
+                [$key, $default] = array_pad(explode('=', (string)strtok(' '), 2), 2, null);
+                $vars = mm_read_ini($menu);
+                $menu = is_array($vars) && isset($vars[$key]) ? $vars[$key] : $default;
+                break;
+        }
+        while ($menu !== false && $menu !== null) {
             $parts = explode(':', $menu, 2);
             $rank = $parts[1] ?? '';
             if ($parts[0] == $item) { $pages["$rank{$page['name']}"] = $page; break; }

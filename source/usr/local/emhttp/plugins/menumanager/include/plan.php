@@ -133,7 +133,7 @@ function mm_plan(array $pages, array $cfg): array {
             if (isset($placed[$name])) { $warn[] = "'$name' is listed in two categories, keeping the first"; continue; }
             if (!isset($tiles[$name])) {
                 if (isset($pages[$name]) && !isset($groups[$name]) && !mm_is_own_internal($name)) {
-                    $warn[] = "'$name' can't be moved: its Menu is indirect (\$var or /file) or names no category";
+                    $warn[] = "'$name' isn't a tile in a category (tabs, dashboard widgets and buttons can't be moved)";
                 }
                 continue;   // a plugin that was uninstalled since the layout was saved
             }
@@ -169,10 +169,13 @@ function mm_plan(array $pages, array $cfg): array {
         $t['hidden'] = isset($hidden[$id]);
         $pristineTitle = $t['title'];
         $t['title'] = $cfg['titles'][$id] ?? $t['title'];
-        $token = mm_menu_value($t['group'], $t['rank']);
-        $same = $token === $t['tokens'][$t['index']];   // keep the plugin's own spacing when nothing moved
-        $want = $same ? $t['menu'] : mm_menu_rebuild($t['tokens'], $t['index'], $token);
-        $intent($id, $want, $t['menu'], mm_menu_rebuild($t['tokens'], $t['index'], null), $t['title'], $pristineTitle);
+        $want = $t['menu'];   // untouched unless the layout placed it somewhere new
+        if ($t['group'] !== null) {
+            $token = mm_menu_value($t['group'], $t['rank']);
+            $now = $t['info']['tokens'][$t['info']['index']] ?? null;
+            if ($token !== $now) $want = mm_menu_rebuild($t['info'], $token);
+        }
+        $intent($id, $want, $t['menu'], mm_menu_rebuild($t['info'], null), $t['title'], $pristineTitle);
     }
     unset($t);
 
@@ -214,17 +217,20 @@ function mm_state(array $plan): array {
     $roots = [];
     foreach (MM_ROOTS as $r) $roots[$r] = [];
     $byGroup = [];
-    foreach ($plan['tiles'] as $t) $byGroup[$t['group']][] = $t;
+    $unplaced = [];
+    foreach ($plan['tiles'] as $t) {
+        if ($t['group'] === null) $unplaced[] = $t;
+        else $byGroup[$t['group']][] = $t;
+    }
+    $tileState = fn($t) => ['id' => $t['name'], 'title' => $t['title'], 'hidden' => $t['hidden'], 'plugin' => $t['plugin'],
+                            'indirect' => $t['info']['indirect'] ?? null];
     $groups = mm_natsort(array_values($plan['groups']), fn($g) => mm_sort_key($g['rank'], $g['name']));
     foreach ($groups as $g) {
-        $tiles = [];
-        foreach (mm_natsort($byGroup[$g['name']] ?? [], fn($t) => mm_sort_key($t['rank'], $t['name'])) as $t) {
-            $tiles[] = ['id' => $t['name'], 'title' => $t['title'], 'hidden' => $t['hidden'], 'plugin' => $t['plugin']];
-        }
+        $tiles = array_map($tileState, mm_natsort($byGroup[$g['name']] ?? [], fn($t) => mm_sort_key($t['rank'], $t['name'])));
         $roots[$g['root']][] = ['id' => $g['name'], 'title' => $g['title'], 'hidden' => $g['hidden'],
                                 'custom' => $g['custom'], 'tag' => $g['tag'], 'plugin' => $g['plugin'], 'tiles' => $tiles];
     }
-    return ['roots' => $roots, 'hub' => $plan['config']['hub']];
+    return ['roots' => $roots, 'unplaced' => array_map($tileState, $unplaced), 'hub' => $plan['config']['hub']];
 }
 
 /** The inverse of mm_state(): the settings page posts its whole state back. */
@@ -265,6 +271,13 @@ function mm_config_from_state(array $state, array $pages): array {
                 if (!empty($t['hidden'])) $cfg['hidden'][] = $tid;
             }
         }
+    }
+    foreach ((array)($state['unplaced'] ?? []) as $t) {   // never placed, but renaming and hiding still apply
+        $tid = (string)($t['id'] ?? '');
+        if (!isset($model['tiles'][$tid])) continue;
+        $ttitle = mm_clean_value((string)($t['title'] ?? ''));
+        if ($ttitle !== '' && $ttitle !== $model['tiles'][$tid]['title']) $cfg['titles'][$tid] = $ttitle;
+        if (!empty($t['hidden'])) $cfg['hidden'][] = $tid;
     }
     $cfg['hub'] = (array)($state['hub'] ?? []);
     return mm_normalize_config($cfg);

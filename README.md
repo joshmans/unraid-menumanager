@@ -39,7 +39,7 @@ The built-in Tools and Settings pages still answer at `/Tools` and `/Settings` w
 ## Limits
 
 - A change made by another plugin's update is undone until the next apply. The plugin re-applies every minute and on array start, so a moved tile can briefly reappear in its old place.
-- Only tiles inside a category are managed. Pages whose `Menu=` is indirect (`$var` or `/file KEY=default`) are left alone, and the settings page tells you when a request was refused.
+- Some plugins choose their own category from a setting (`Menu="/boot/config/plugins/x/x.cfg MENU=Utilities"`, or a `$variable`). They are shown in the category they currently resolve to, tagged **setting**, and you can move or hide them like any other tile. Moving one replaces that line with a fixed category, so the plugin's own setting is ignored until you reset. `$variable` menus can't be evaluated outside Unraid's page loader, so their default is used to place them. A tile whose setting points at no category shows up under **Not in a category** until you place it.
 - Tabs of a multi-page plugin, dashboard widgets and toolbar buttons are not tiles and are never touched.
 
 ## Development

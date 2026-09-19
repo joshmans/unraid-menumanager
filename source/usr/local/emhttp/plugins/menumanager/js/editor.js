@@ -45,6 +45,8 @@
     return null;
   }
   function findTile(id) {
+    var u = state.unplaced || [];
+    for (var k = 0; k < u.length; k++) if (u[k].id === id) return { group: null, tiles: u, index: k, tile: u[k] };
     for (var r = 0; r < ROOTS.length; r++) {
       var list = state.roots[ROOTS[r]];
       for (var i = 0; i < list.length; i++) {
@@ -98,7 +100,7 @@
 
   function iconBtn(label, title, fn) { return h('button', { type: 'button', class: 'mm-i', title: title, onclick: fn }, label); }
 
-  function tileRow(t) {
+  function tileRow(t, unplaced) {
     var moveSel = h('select', { class: 'mm-move', title: 'Move to another category', onchange: function () {
       if (this.value) moveTile(t.id, this.value);
     } }, h('option', { value: '' }, '→'));
@@ -107,12 +109,14 @@
     });
     var row = h('div', { class: 'mm-tile' + (t.hidden ? ' hidden' : ''), draggable: 'true', 'data-tile': t.id },
       h('span', { class: 'mm-ttitle', title: t.id }, t.title),
+      t.indirect ? h('span', { class: 'mm-badge', title: 'This plugin decides its own category from a setting. Placing it here overrides that until you reset.' }, 'setting') : null,
       h('span', { class: 'mm-plugin' }, t.plugin),
       iconBtn('✎', 'Rename', function () { rename(t); }),
       iconBtn(t.hidden ? 'show' : 'hide', t.hidden ? 'Show in menus' : 'Hide this tile', function () { change(function () { t.hidden = !t.hidden; }); }),
       moveSel);
     row.addEventListener('dragstart', function (e) { drag = t.id; row.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', t.id); });
     row.addEventListener('dragend', function () { drag = null; render(); });
+    if (unplaced) return row;   // nothing can be dropped into "not in a category"
     row.addEventListener('dragover', function (e) { if (drag && drag !== t.id) { e.preventDefault(); e.stopPropagation(); row.classList.add('dropbefore'); } });
     row.addEventListener('dragleave', function () { row.classList.remove('dropbefore'); });
     row.addEventListener('drop', function (e) {
@@ -125,7 +129,7 @@
   }
 
   function groupCard(g, root, index, count) {
-    var tiles = h('div', { class: 'mm-tiles' }, g.tiles.length ? g.tiles.map(tileRow) : h('span', { class: 'mm-note' }, 'Empty. Drag tiles here.'));
+    var tiles = h('div', { class: 'mm-tiles' }, g.tiles.length ? g.tiles.map(function (t) { return tileRow(t, false); }) : h('span', { class: 'mm-note' }, 'Empty. Drag tiles here.'));
     var card = h('div', { class: 'mm-group' + (g.hidden ? ' hidden' : ''), 'data-group': g.id },
       h('div', { class: 'mm-ghead' },
         h('b', { title: g.id }, g.title),
@@ -142,6 +146,13 @@
     card.addEventListener('dragleave', function (e) { if (e.target === card) card.classList.remove('dragover'); });
     card.addEventListener('drop', function (e) { if (!drag) return; e.preventDefault(); moveTile(drag, g.id); });
     return card;
+  }
+
+  function unplacedCard() {
+    return h('div', { class: 'mm-group mm-unplaced' },
+      h('div', { class: 'mm-ghead' }, h('b', {}, 'Not in a category'),
+        h('span', { class: 'mm-note' }, 'These pages pick their category from a setting that points nowhere. Drag or move them into one.')),
+      h('div', { class: 'mm-tiles' }, state.unplaced.map(function (t) { return tileRow(t, true); })));
   }
 
   function hubBox() {
@@ -204,6 +215,7 @@
     app.appendChild(h('div', { class: 'mm-warnings' }));
     app.querySelector('.mm-warnings').innerHTML = warnHTML;
     app.appendChild(h('div', { class: 'mm-cols' }, cols));
+    if (state.unplaced && state.unplaced.length) app.appendChild(unplacedCard());
     app.appendChild(hubBox());
     if (dirty) setDirty(true);
   }

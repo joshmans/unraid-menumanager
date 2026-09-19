@@ -12,8 +12,15 @@ check('finds the three native categories', array_keys($model['groups']) === ['Ut
     || (($k = array_keys($model['groups'])) && sort($k) === true && $k === ['DiskUtilities', 'SystemInformation', 'Utilities']));
 check('categories know their root', $model['groups']['Utilities']['root'] === 'Settings' && $model['groups']['DiskUtilities']['root'] === 'Tools');
 check('tiles are found', isset($model['tiles']['FooSettings'], $model['tiles']['BarTool'], $model['tiles']['Registration'], $model['tiles']['QuxOne']));
-check('tab pages, dashboard widgets and indirect menus are not tiles',
-    !isset($model['tiles']['FooTab']) && !isset($model['tiles']['BazDash']) && !isset($model['tiles']['BazDyn']));
+check('tab pages and dashboard widgets are not tiles', !isset($model['tiles']['FooTab']) && !isset($model['tiles']['BazDash']));
+check('an indirect menu resolves to its default when the file is missing',
+    ($model['tiles']['BazDyn']['group'] ?? '') === 'Utilities' && $model['tiles']['BazDyn']['info']['indirect'] === 'file');
+check('a $var menu resolves to its default', ($model['tiles']['BazVar']['group'] ?? '') === 'Utilities' && $model['tiles']['BazVar']['info']['indirect'] === 'var');
+check('an indirect menu that names no category is a tile that is not in one', array_key_exists('BazNone', $model['tiles']) && $model['tiles']['BazNone']['group'] === null);
+$GLOBALS['mm_read_ini_hook'] = fn($f) => $f === '/boot/config/plugins/baz/baz.cfg' ? ['MENU' => 'DiskUtilities:3'] : false;
+$viaFile = mm_model(mm_scan($root));
+check('the setting in the ini file decides where it sits', ($viaFile['tiles']['BazDyn']['group'] ?? '') === 'DiskUtilities' && $viaFile['tiles']['BazDyn']['rank'] === '3');
+unset($GLOBALS['mm_read_ini_hook']);
 check('a page listed in several menus is a tile through its category token', isset($model['tiles']['BazMulti']) && $model['tiles']['BazMulti']['group'] === 'Utilities');
 check('our own hub is not a tile', !isset($model['tiles']['MenuManagerHub']));
 check('our settings page is a normal movable tile', isset($model['tiles']['MenuManager']));
@@ -32,7 +39,7 @@ $site = unraid_site($root);
 check('Unraid now lists Foo Settings under Disk Utilities', unraid_names($site, 'DiskUtilities') === ['FooSettings', 'BarTool', 'QuxOne'], implode(',', unraid_names($site, 'DiskUtilities')));
 check('and no longer under User Utilities', !in_array('FooSettings', unraid_names($site, 'Utilities'), true));
 check('its Menu is exactly Group:rank', $site['FooSettings']['Menu'] === 'DiskUtilities:10');
-check('pages that were not touched are byte identical', file_get_contents("$root/plugins/baz/BazDyn.page") === $pristine['/plugins/baz/BazDyn.page']);
+check('pages that were not touched are byte identical', file_get_contents("$root/plugins/baz/BazDyn.page") === $pristine['/plugins/baz/BazDyn.page'] && file_get_contents("$root/plugins/baz/BazNone.page") === $pristine['/plugins/baz/BazNone.page']);
 check('applying twice changes nothing more', mm_apply($root, $cfg)['changed'] === []);
 
 /* ---- a plugin update overwrites the file; the next apply puts the layout back ---- */
@@ -58,6 +65,35 @@ $site = unraid_site($root);
 check('hiding it drops only that category', $site['BazMulti']['Menu'] === 'Buttons' && !in_array('BazMulti', unraid_names($site, 'DiskUtilities'), true));
 mm_revert($root);
 check('reverted', mm_snapshot($root) === $pristine);
+
+/* ---- indirect menus: the user decides, the override is reversible ---- */
+$cfg = mm_default_config();
+$cfg['layout'] = ['DiskUtilities' => ['BazDyn', 'BazVar', 'BazNone']];
+mm_apply($root, $cfg);
+$site = unraid_site($root);
+check('a file-driven tile is moved by replacing the indirection', $site['BazDyn']['Menu'] === 'DiskUtilities:10');
+check('a $var tile is moved too', $site['BazVar']['Menu'] === 'DiskUtilities:20');
+check('a tile that was in no category can be placed', $site['BazNone']['Menu'] === 'DiskUtilities:30');
+check('Unraid lists all three under Disk Utilities, in order', array_values(array_intersect(unraid_names($site, 'DiskUtilities'), ['BazDyn', 'BazVar', 'BazNone'])) === ['BazDyn', 'BazVar', 'BazNone']);
+$cfg['hidden'] = ['BazDyn'];
+mm_apply($root, $cfg);
+check('hiding an indirect tile empties its Menu', unraid_site($root)['BazDyn']['Menu'] === '');
+mm_revert($root);
+check('reverting brings the indirection back byte for byte', mm_snapshot($root) === $pristine);
+
+$cfg = mm_default_config();
+$cfg['layout'] = ['Utilities' => ['BazDyn']];   // placed where it already resolves to, at a rank
+mm_apply($root, $cfg);
+check('pinning an indirect tile in place makes it static', unraid_site($root)['BazDyn']['Menu'] === 'Utilities:10');
+mm_revert($root);
+
+$plan = mm_plan(mm_scan($root), mm_default_config());
+$state = mm_state($plan);
+check('the state lists tiles that are in no category', array_column($state['unplaced'], 'id') === ['BazNone']);
+check('and marks indirect tiles', in_array('file', array_column(array_merge(...array_column($state['roots']['Settings'], 'tiles')), 'indirect'), true));
+$state['unplaced'][0]['hidden'] = true;
+$cfg = mm_config_from_state($state, mm_scan($root));
+check('an unplaced tile can be hidden without being placed', $cfg['hidden'] === ['BazNone'] && !in_array('BazNone', array_merge(...array_values($cfg['layout'])), true));
 
 /* ---- hide, rename ---- */
 $cfg = mm_default_config();
@@ -105,10 +141,10 @@ check('deleting the category removes its page and frees the tiles',
 
 /* ---- refusals ---- */
 $cfg = mm_default_config();
-$cfg['layout'] = ['DiskUtilities' => ['BazDyn', 'FooSettings', 'Ghost'], 'Nowhere' => ['BarTool'], 'Utilities' => ['FooSettings']];
+$cfg['layout'] = ['DiskUtilities' => ['BazDash', 'FooSettings', 'Ghost'], 'Nowhere' => ['BarTool'], 'Utilities' => ['FooSettings']];
 $plan = mm_plan(mm_scan($root), $cfg);
 $w = implode(' | ', $plan['warnings']);
-check('an indirect menu is refused', str_contains($w, "'BazDyn' can't be moved"));
+check('a dashboard widget is refused', str_contains($w, "'BazDash' isn't a tile"));
 check('an unknown category is reported', str_contains($w, "'Nowhere'"));
 check('a tile in two categories keeps the first', str_contains($w, "'FooSettings' is listed in two") && $plan['tiles']['FooSettings']['group'] === 'DiskUtilities');
 check('a plugin that is gone is silently skipped', !str_contains($w, 'Ghost'));
