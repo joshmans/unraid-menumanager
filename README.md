@@ -8,7 +8,7 @@ Choose where every icon on the **Tools** and **Settings** pages lives.
 
 Everything is reversible. The plugin never deletes anything: it rewrites the one `Menu=` line of a page header and remembers the original, so **Reset to defaults** puts every file back byte for byte.
 
-> **Status: beta.** The logic is covered by tests that use a copy of Unraid's own menu-building code, and it has been run on one Unraid 7.2+ server. Hiding the built-in menus is the option with the least testing. Read *If something goes wrong* before you try it, and please open an issue if anything behaves oddly.
+> **Status:** tested on an Unraid 7.2+ server through install, uninstall, reset, reinstall and a reboot, and covered by automated tests that use a copy of Unraid's own menu-building code. Every change is reversible (see *If something goes wrong*). Hiding the built-in Tools and Settings menus has had the least real-world use, so read the recovery steps before trying it. Please open an issue if anything behaves oddly.
 
 ## Install
 
