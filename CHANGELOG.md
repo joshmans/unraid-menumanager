@@ -1,8 +1,8 @@
 # Menu Manager
 
-## Unreleased
+## 2026.09.19d
 
-First scaffold.
+First release.
 
 - Reorder tiles and categories on the Tools and Settings pages, and drag tiles between categories.
 - Rename categories and tiles, and create your own categories.
