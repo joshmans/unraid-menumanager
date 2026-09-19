@@ -20,7 +20,20 @@ function mm_hub_icon(array $pg): string {
 
 function mm_render_hub(): void {
     if (!function_exists('find_pages')) { echo '<p>The unified page needs the Unraid page builder.</p>'; return; }
-    echo '<input type="search" id="mm-hub-filter" placeholder="Filter…" style="margin:0 0 12px;max-width:280px">';
+    $title = (string)($GLOBALS['myPage']['Title'] ?? 'this page');
+    $csrf = (string)($GLOBALS['var']['csrf_token'] ?? '');
+    $api = '/plugins/menumanager/include/api.php';
+    echo '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:0 0 12px">'
+       . '<input type="search" id="mm-hub-filter" placeholder="Filter…" style="margin:0;max-width:280px">'
+       . '<span style="margin-left:auto;display:inline-flex;gap:12px;align-items:center">'
+       . '<a href="/Settings/MenuManager" id="mm-hub-settings"><i class="fa fa-cog"></i> Page Settings</a>'
+       . '<button type="button" id="mm-hub-disable" style="margin:0" data-title="' . mm_h($title) . '" data-api="' . mm_h($api) . '" data-csrf="' . mm_h($csrf) . '">Disable this page</button>'
+       . '</span></div>';
+    echo '<script>document.getElementById("mm-hub-disable").addEventListener("click",function(){'
+       . 'var b=this;if(!confirm("Disable "+b.dataset.title+"? The built-in Tools and Settings menus come back if they were hidden. Your layout is kept."))return;'
+       . 'fetch(b.dataset.api,{method:"POST",credentials:"same-origin",body:new URLSearchParams({action:"disable_hub",csrf_token:b.dataset.csrf})})'
+       . '.then(function(r){if(!r.ok)throw new Error(r.statusText);location.href="/Tools";})'
+       . '.catch(function(e){alert("Could not disable: "+e.message);});});</script>';
     $shown = 0;
     foreach (['Tools', 'Settings'] as $root) {
         foreach (find_pages($root) as $group) {

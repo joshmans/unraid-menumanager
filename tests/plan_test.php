@@ -156,6 +156,7 @@ mm_apply($root, $cfg);
 $site = unraid_site($root);
 check('the hub joins the main menu', in_array('MenuManagerHub', unraid_names($site, 'Tasks'), true) && $site['MenuManagerHub']['Menu'] === 'Tasks:89');
 check('and takes the chosen name', $site['MenuManagerHub']['Title'] === 'Launchpad');
+check('the main menu label (Name=) follows the title, not the file name', $site['MenuManagerHub']['Name'] === 'Launchpad');
 check('the built-in Tools and Settings leave the main menu', !in_array('Tools', unraid_names($site, 'Tasks'), true) && !in_array('Settings', unraid_names($site, 'Tasks'), true));
 check('their categories still exist for the hub to list', in_array('DiskUtilities', unraid_names($site, 'Tools'), true));
 mm_revert($root);

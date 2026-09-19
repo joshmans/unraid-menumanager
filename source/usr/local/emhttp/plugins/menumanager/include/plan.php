@@ -187,6 +187,8 @@ function mm_plan(array $pages, array $cfg): array {
         $want = $hub['enabled'] ? 'Tasks:' . $hub['rank'] : '';
         if ($want !== (string)($pristine['Menu'] ?? '')) $e['Menu'] = $want;
         if ($hub['title'] !== (string)($pristine['Title'] ?? '')) $e['Title'] = $hub['title'];
+        // the main menu labels a page by Name=, falling back to its file name ("MENUMANAGERHUB")
+        if ($hub['title'] !== (string)($pristine['Name'] ?? '')) $e['Name'] = $hub['title'];
         if ($hub['code'] !== (string)($pristine['Code'] ?? '')) $e['Code'] = $hub['code'];
         if ($e) $edits[MM_HUB_PAGE] = $e;
     }

@@ -49,11 +49,23 @@ function find_pages($item) { return unraid_find_pages($GLOBALS['site'], $item); 
 ob_start();
 mm_render_hub();
 $html = ob_get_clean();
+check('the hub has a link to the settings page', str_contains($html, 'href="/Settings/MenuManager"') && str_contains($html, 'Page Settings'));
+check('the hub has a quick disable', str_contains($html, 'id="mm-hub-disable"') && str_contains($html, 'disable_hub'));
 check('the hub lists the renamed category', str_contains($html, 'Storage'));
 check('the hub links tiles under the right root', str_contains($html, 'href="/Tools/FooSettings"') && str_contains($html, 'href="/Settings/BarSettings"'));
 check('the hub lists tiles from both roots', str_contains($html, 'Registration') && str_contains($html, 'Bar Settings'));
 check('the hub skips empty categories', !str_contains($html, '>Media<'));
 check('hub output is escaped', !str_contains($html, '<script>alert'));
+
+/* ---- quick disable from the unified page ---- */
+$state['hub']['hideBuiltin'] = true;
+api('save', ['state' => json_encode($state)]);
+check('precondition: built-ins hidden and hub on', !in_array('Tools', unraid_names(unraid_site($root), 'Tasks'), true) && in_array('MenuManagerHub', unraid_names(unraid_site($root), 'Tasks'), true));
+$r = api('disable_hub');
+$site = unraid_site($root);
+check('disable turns the unified page off', empty($r['error']) && !in_array('MenuManagerHub', unraid_names($site, 'Tasks'), true));
+check('and brings the built-in menus back', in_array('Tools', unraid_names($site, 'Tasks'), true) && in_array('Settings', unraid_names($site, 'Tasks'), true));
+check('but keeps the layout', json_decode(file_get_contents("$root/layout.json"), true)['hub']['title'] === 'Launchpad' && unraid_names($site, 'DiskUtilities')[0] === 'FooSettings');
 
 /* ---- reset ---- */
 $r = api('reset');

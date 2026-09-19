@@ -20,6 +20,13 @@ if (!function_exists('mm_handle')) {
                 if (!mm_save_config($paths['config'], $cfg)) return [500, ['error' => 'could not write ' . $paths['config']]];
                 $r = mm_apply($paths['emhttp'], $cfg);
                 return [200, $view(['saved' => true, 'changed' => $r['changed']], $cfg)];
+            case 'disable_hub':   // the escape hatch on the unified page itself
+                $cfg = mm_load_config($paths['config']);
+                $cfg['hub']['enabled'] = false;
+                $cfg['hub']['hideBuiltin'] = false;
+                if (!mm_save_config($paths['config'], $cfg)) return [500, ['error' => 'could not write ' . $paths['config']]];
+                $r = mm_apply($paths['emhttp'], $cfg);
+                return [200, $view(['saved' => true, 'changed' => $r['changed']], $cfg)];
             case 'reset':
                 mm_revert($paths['emhttp']);
                 mm_save_config($paths['config'], mm_default_config());
