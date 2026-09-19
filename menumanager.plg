@@ -2,10 +2,10 @@
 <!DOCTYPE PLUGIN [
  <!ENTITY name "menumanager">
  <!ENTITY author "joshmans">
- <!ENTITY version "2026.09.19e">
+ <!ENTITY version "2026.09.19f">
  <!ENTITY gitURL "https://github.com/joshmans/unraid-menumanager">
  <!ENTITY pluginURL "&gitURL;/releases/download/&version;/&name;-&version;.txz">
- <!ENTITY sha256 "18068b589f075a5e708850304e3ea528089bbfb2b548b74d56ad46fb80420339">
+ <!ENTITY sha256 "9111022e8cd22845fb325bd6641687f92a918caa384146a964683e4590fd1caa">
  <!ENTITY launch "Settings/MenuManager">
 ]>
 
@@ -17,6 +17,10 @@ Decide where every tile lives. Reorder and rename the categories on the Tools an
 
 <CHANGES><![CDATA[
 # Menu Manager
+
+## 2026.09.19f
+
+- Fixed the once-a-minute re-apply not being scheduled after a first install. Unraid registers a plugin only after its install script has run, so the schedule is now built once that has happened, and again when the array starts.
 
 ## 2026.09.19e
 
@@ -57,7 +61,13 @@ chmod 755 /usr/local/emhttp/plugins/&name;/event/started
 # /usr/local/emhttp is RAM: a reboot or another plugin's update puts the original
 # menus back, so re-apply the saved layout every minute as well as at boot
 printf '%s\n' '* * * * * php -q /usr/local/emhttp/plugins/&name;/scripts/apply.php apply --quiet &gt;/dev/null 2&gt;&amp;1' > /boot/config/plugins/&name;/&name;.cron
-/usr/local/sbin/update_cron 2>/dev/null
+
+# update_cron builds the crontab from the plugins registered in /var/log/plugins, and
+# Unraid only registers this one after these scripts have finished, so wait for that
+( for i in $(seq 1 60); do
+    if [ -e /var/log/plugins/&name;.plg ]; then /usr/local/sbin/update_cron; break; fi
+    sleep 1
+  done ) >/dev/null 2>&amp;1 &lt;/dev/null &amp;
 
 php -q /usr/local/emhttp/plugins/&name;/scripts/apply.php apply --quiet
 rm -f $(ls /boot/config/plugins/&name;/&name;-*.txz 2>/dev/null | grep -v "&version;")
