@@ -191,6 +191,23 @@ check('a new category gets a stable id', isset($cfg3['custom']['MM_MyStuff']) &&
 mm_apply($root, $cfg3);
 check('and it shows up', unraid_names(unraid_site($root), 'MM_MyStuff') === ['BarSettings']);
 
+/* ---- saving without changing anything writes nothing ---- */
+mm_revert($root);
+check('fixture is pristine again', mm_snapshot($root) === $pristine);
+$untouched = mm_config_from_state(mm_state(mm_plan(mm_scan($root), mm_default_config())), mm_scan($root));
+check('an unchanged state produces an empty layout', $untouched['layout'] === [] && $untouched['groupOrder'] === [] && $untouched['hidden'] === []);
+check('so applying it changes no file', mm_apply($root, $untouched)['changed'] === []);
+// only the category that was reordered gets pinned, the indirect tiles elsewhere keep following their setting
+$state = mm_state(mm_plan(mm_scan($root), mm_default_config()));
+foreach ($state['roots']['Tools'] as &$g) if ($g['id'] === 'DiskUtilities') $g['tiles'] = array_reverse($g['tiles']);
+unset($g);
+$cfg = mm_config_from_state($state, mm_scan($root));
+check('only the reordered category is in the layout', array_keys($cfg['layout']) === ['DiskUtilities']);
+mm_apply($root, $cfg);
+check('indirect tiles in other categories are left alone', file_get_contents("$root/plugins/baz/BazVar.page") === $pristine['/plugins/baz/BazVar.page']
+    && file_get_contents("$root/plugins/baz/BazDyn.page") === $pristine['/plugins/baz/BazDyn.page']);
+mm_revert($root);
+
 /* ---- config files ---- */
 check('a missing or corrupt config is just the defaults', mm_load_config("$root/nope.json") === mm_default_config());
 file_put_contents($cfgFile, '{not json');

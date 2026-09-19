@@ -272,6 +272,19 @@ function mm_config_from_state(array $state, array $pages): array {
             }
         }
     }
+    // Only keep an order that differs from what Unraid would list anyway, so a
+    // save never rewrites (or pins) pages in categories the user left alone.
+    $natural = [];
+    foreach ($model['tiles'] as $t) if ($t['group'] !== null) $natural[$t['group']][] = $t;
+    foreach ($cfg['layout'] as $gid => $list) {
+        $sorted = array_column(mm_natsort($natural[$gid] ?? [], fn($t) => mm_sort_key($t['rank'], $t['name'])), 'name');
+        if ($list === $sorted) unset($cfg['layout'][$gid]);
+    }
+    foreach (MM_ROOTS as $root) {
+        $groups = array_filter($model['groups'], fn($g) => $g['root'] === $root);
+        $sorted = array_column(mm_natsort(array_values($groups), fn($g) => mm_sort_key($g['rank'], $g['name'])), 'name');
+        if (($cfg['groupOrder'][$root] ?? null) === $sorted) unset($cfg['groupOrder'][$root]);
+    }
     foreach ((array)($state['unplaced'] ?? []) as $t) {   // never placed, but renaming and hiding still apply
         $tid = (string)($t['id'] ?? '');
         if (!isset($model['tiles'][$tid])) continue;
