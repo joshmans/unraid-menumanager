@@ -30,12 +30,17 @@
     });
   }
 
+  // the buttons appear above and below the editor, so every status line is kept in step
   function setDirty(v) {
     dirty = v;
-    var s = app.querySelector('.mm-status');
-    if (s) { s.textContent = v ? 'Unsaved changes' : s.textContent; s.classList.toggle('dirty', v); }
+    app.querySelectorAll('.mm-status').forEach(function (s) {
+      if (v) s.textContent = 'Unsaved changes';
+      s.classList.toggle('dirty', v);
+    });
   }
-  function status(msg) { var s = app.querySelector('.mm-status'); s.textContent = msg; s.classList.remove('dirty'); }
+  function status(msg) {
+    app.querySelectorAll('.mm-status').forEach(function (s) { s.textContent = msg; s.classList.remove('dirty'); });
+  }
 
   function findGroup(id) {
     for (var r = 0; r < ROOTS.length; r++) {
@@ -193,6 +198,13 @@
     (w || []).forEach(function (m) { box.appendChild(h('div', { class: 'mm-warn' }, m)); });
   }
 
+  function actionBar(statusText) {
+    return h('div', { class: 'mm-bar' },
+      h('button', { type: 'button', onclick: save }, 'Save & apply'),
+      h('button', { type: 'button', onclick: reset }, 'Reset to defaults'),
+      h('span', { class: 'mm-status' }, statusText));
+  }
+
   function render() {
     var keepWarn = app.querySelector('.mm-warnings');
     var warnHTML = keepWarn ? keepWarn.innerHTML : '';
@@ -208,15 +220,13 @@
       return col;
     });
     app.innerHTML = '';
-    app.appendChild(h('div', { class: 'mm-bar' },
-      h('button', { type: 'button', onclick: save }, 'Save & apply'),
-      h('button', { type: 'button', onclick: reset }, 'Reset to defaults'),
-      h('span', { class: 'mm-status' }, statusText)));
+    app.appendChild(actionBar(statusText));
     app.appendChild(h('div', { class: 'mm-warnings' }));
     app.querySelector('.mm-warnings').innerHTML = warnHTML;
     app.appendChild(h('div', { class: 'mm-cols' }, cols));
     if (state.unplaced && state.unplaced.length) app.appendChild(unplacedCard());
     app.appendChild(hubBox());
+    app.appendChild(actionBar(statusText));
     if (dirty) setDirty(true);
   }
 

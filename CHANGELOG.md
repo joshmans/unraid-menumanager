@@ -12,4 +12,5 @@ First scaffold.
 - Pages that pick their category from a setting (`Menu="/file KEY=default"` or `$var`) can be moved and hidden too; pages whose setting points nowhere appear under "Not in a category".
 - The unified page has quick actions at the top: **Page Settings** (a link to Menu Manager) and **Disable this page**, which also brings back the built-in Tools and Settings menus if they were hidden.
 - The unified page is labelled by its name in the main menu (it used to show its internal file name).
+- Save & apply and Reset to defaults are repeated at the bottom of the settings page.
 - Every change is reversible: original page headers are kept in the files and "Reset to defaults" (or `apply.php revert`) restores them exactly.
