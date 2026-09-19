@@ -1,3 +1,5 @@
 #!/bin/bash
-# emhttp runs this when the array starts, by then every plugin has installed its pages.
+# emhttp runs this when the array starts, by then every plugin has installed its pages
+# and is registered, so the cron entry is (re)built too.
 php -q /usr/local/emhttp/plugins/menumanager/scripts/apply.php apply --quiet
+[ -x /usr/local/sbin/update_cron ] && /usr/local/sbin/update_cron

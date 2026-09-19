@@ -1,5 +1,9 @@
 # Menu Manager
 
+## 2026.09.19f
+
+- Fixed the once-a-minute re-apply not being scheduled after a first install. Unraid registers a plugin only after its install script has run, so the schedule is now built once that has happened, and again when the array starts.
+
 ## 2026.09.19e
 
 - Fixed uninstalling then reinstalling the same version before a reboot doing nothing. The package is now removed from Unraid's installed list on uninstall.
