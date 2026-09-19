@@ -1,5 +1,10 @@
 # Menu Manager
 
+## 2026.09.19e
+
+- Fixed uninstalling then reinstalling the same version before a reboot doing nothing. The package is now removed from Unraid's installed list on uninstall.
+- The package is checked with SHA-256 instead of MD5.
+
 ## 2026.09.19d
 
 First release.
