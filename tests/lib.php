@@ -53,7 +53,7 @@ function mm_fixture(): string {
         'baz/BazNone.page'             => "Menu=\"/boot/config/plugins/baz/none.cfg MENU=Elsewhere\"\nTitle=\"Baz None\"\n---\nx\n",
         'qux/QuxOne.page'              => "Menu=\"DiskUtilities:2\"\nTitle=\"Qux One\"\n---\nx\n",
         'menumanager/MenuManager.page' => "Menu=\"Utilities\"\nTitle=\"Menu Manager\"\n---\nx\n",
-        'menumanager/MenuManagerHub.page' => "Menu=\"\"\nTitle=\"Control Center\"\nCode=\"e909\"\nType=\"xmenu\"\nTabs=\"false\"\n---\nhub\n",
+        'menumanager/MenuManagerHub.page' => "Menu=\"\"\nTitle=\"Switchboard\"\nCode=\"e909\"\nType=\"xmenu\"\nTabs=\"false\"\n---\nhub\n",
     ];
     foreach ($files as $rel => $content) {
         $path = "$root/plugins/$rel";

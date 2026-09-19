@@ -8,7 +8,7 @@
 
 require_once __DIR__ . '/model.php';
 
-const MM_HUB_DEFAULT_TITLE = 'Control Center';
+const MM_HUB_DEFAULT_TITLE = 'Switchboard';
 
 function mm_default_config(): array {
     return [

@@ -12,7 +12,7 @@ Everything is reversible. The plugin never deletes anything: it rewrites the one
 
 ## Naming the unified page
 
-The default is **Control Center**. It is configurable, and the settings page suggests: *Launchpad*, *Toolbox*, *Everything*, *Console*, *Hub*. Pick whichever reads best next to Dashboard / Main / Shares.
+The default is **Switchboard**. It is configurable, and the settings page suggests: *Control Center*, *Launchpad*, *Toolbox*, *Cockpit*, *Bridge*, *Workshop*. Pick whichever reads best next to Dashboard / Main / Shares.
 
 ## Install (development)
 

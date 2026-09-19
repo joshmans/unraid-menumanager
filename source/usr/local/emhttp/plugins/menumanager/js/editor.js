@@ -4,7 +4,7 @@
   var api = app.dataset.api, csrf = app.dataset.csrf;
   var state = null, dirty = false, drag = null, newCount = 0;
   var ROOTS = ['Tools', 'Settings'];
-  var HUB_NAMES = ['Control Center', 'Launchpad', 'Toolbox', 'Everything', 'Console', 'Hub'];
+  var HUB_NAMES = ['Switchboard', 'Control Center', 'Launchpad', 'Toolbox', 'Cockpit', 'Bridge', 'Workshop'];
 
   function h(tag, attrs) {
     var el = document.createElement(tag);
