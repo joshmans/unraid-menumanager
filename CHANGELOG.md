@@ -1,5 +1,9 @@
 # Menu Manager
 
+## 2026.09.20
+
+- The plugin now names the same update URL that its Community Apps listing uses (raw.githubusercontent.com), so Community Apps recognises an installed copy and shows it as installed. No other change.
+
 ## 2026.09.19f
 
 - Fixed the once-a-minute re-apply not being scheduled after a first install. Unraid registers a plugin only after its install script has run, so the schedule is now built once that has happened, and again when the array starts.

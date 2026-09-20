@@ -2,14 +2,15 @@
 <!DOCTYPE PLUGIN [
  <!ENTITY name "menumanager">
  <!ENTITY author "joshmans">
- <!ENTITY version "2026.09.19f">
+ <!ENTITY version "2026.09.20">
  <!ENTITY gitURL "https://github.com/joshmans/unraid-menumanager">
  <!ENTITY pluginURL "&gitURL;/releases/download/&version;/&name;-&version;.txz">
- <!ENTITY sha256 "9111022e8cd22845fb325bd6641687f92a918caa384146a964683e4590fd1caa">
+ <!ENTITY plgURL "https://raw.githubusercontent.com/joshmans/unraid-menumanager/main/menumanager.plg">
+ <!ENTITY sha256 "3ac31fa95735050322524c28895c89a94d6bf3c5512e69e53317889f9888e221">
  <!ENTITY launch "Settings/MenuManager">
 ]>
 
-<PLUGIN name="&name;" Title="Menu Manager" author="&author;" version="&version;" pluginURL="&gitURL;/raw/main/&name;.plg" launch="&launch;" icon="th-large" min="7.2.0" support="&gitURL;/issues">
+<PLUGIN name="&name;" Title="Menu Manager" author="&author;" version="&version;" pluginURL="&plgURL;" launch="&launch;" icon="th-large" min="7.2.0" support="&gitURL;/issues">
 
 <DESCRIPTION>
 Decide where every tile lives. Reorder and rename the categories on the Tools and Settings pages, create your own, move tiles (or whole categories) between Tools and Settings, hide what you never use, and optionally put everything on one unified page in the main menu.
@@ -17,6 +18,10 @@ Decide where every tile lives. Reorder and rename the categories on the Tools an
 
 <CHANGES><![CDATA[
 # Menu Manager
+
+## 2026.09.20
+
+- The plugin now names the same update URL that its Community Apps listing uses (raw.githubusercontent.com), so Community Apps recognises an installed copy and shows it as installed. No other change.
 
 ## 2026.09.19f
 
