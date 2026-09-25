@@ -1,5 +1,10 @@
 # Menu Manager
 
+## 2026.09.25
+
+- Security: the settings endpoint now only accepts changes sent as a POST (which carries Unraid's CSRF token). Before, a plain link opened while you were logged in to the Unraid web interface could reset your layout or switch off the unified page. Loading the settings page is unchanged.
+- Fixed uninstalling occasionally leaving the menu edits in place until the next reboot. The once-a-minute re-apply could run between the revert and the end of the uninstall and put them back. The schedule is now removed, and any run already in progress allowed to finish, before the revert.
+
 ## 2026.09.20
 
 - The plugin now names the same update URL that its Community Apps listing uses (raw.githubusercontent.com), so Community Apps recognises an installed copy and shows it as installed. No other change.

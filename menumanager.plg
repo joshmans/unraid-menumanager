@@ -2,11 +2,11 @@
 <!DOCTYPE PLUGIN [
  <!ENTITY name "menumanager">
  <!ENTITY author "joshmans">
- <!ENTITY version "2026.09.20">
+ <!ENTITY version "2026.09.25">
  <!ENTITY gitURL "https://github.com/joshmans/unraid-menumanager">
  <!ENTITY pluginURL "&gitURL;/releases/download/&version;/&name;-&version;.txz">
  <!ENTITY plgURL "https://raw.githubusercontent.com/joshmans/unraid-menumanager/main/menumanager.plg">
- <!ENTITY sha256 "3ac31fa95735050322524c28895c89a94d6bf3c5512e69e53317889f9888e221">
+ <!ENTITY sha256 "499ab3c21c398e639723c6352f207cd66beb7fe4dd65e0868f6afdc43209b297">
  <!ENTITY launch "Settings/MenuManager">
 ]>
 
@@ -18,6 +18,11 @@ Decide where every tile lives. Reorder and rename the categories on the Tools an
 
 <CHANGES><![CDATA[
 # Menu Manager
+
+## 2026.09.25
+
+- Security: the settings endpoint now only accepts changes sent as a POST (which carries Unraid's CSRF token). Before, a plain link opened while you were logged in to the Unraid web interface could reset your layout or switch off the unified page. Loading the settings page is unchanged.
+- Fixed uninstalling occasionally leaving the menu edits in place until the next reboot. The once-a-minute re-apply could run between the revert and the end of the uninstall and put them back. The schedule is now removed, and any run already in progress allowed to finish, before the revert.
 
 ## 2026.09.20
 
@@ -82,10 +87,19 @@ echo "Menu Manager &version; installed"
 
 <FILE Run="/bin/bash" Method="remove">
 <INLINE>
+# stop the once-a-minute re-apply first. While it is still scheduled it can run between
+# the revert below and the end of this script and put the edits straight back, where
+# they would stay (the pages live in RAM) until the next reboot
+rm -f /boot/config/plugins/&name;/&name;.cron
+/usr/local/sbin/update_cron 2>/dev/null
+# a run that started just before that may still be going: let it finish before reverting
+for i in $(seq 1 20); do
+  pgrep -f 'scripts/[a]pply.php apply' >/dev/null || break
+  sleep 0.5
+done
 # give every tile back to where its plugin put it before the code goes away
 php -q /usr/local/emhttp/plugins/&name;/scripts/apply.php revert --quiet
-rm -f /boot/config/plugins/&name;/&name;.cron /boot/config/plugins/&name;/&name;-*.txz
-/usr/local/sbin/update_cron 2>/dev/null
+rm -f /boot/config/plugins/&name;/&name;-*.txz
 # Unraid does not forget the package on its own: without this, reinstalling the same
 # version before a reboot is skipped as "already installed" and installs nothing
 for pkg in /var/log/packages/&name;-*; do
