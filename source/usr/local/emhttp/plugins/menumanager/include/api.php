@@ -36,7 +36,9 @@ if (!function_exists('mm_handle')) {
     }
 }
 
-$mmAction = $_POST['action'] ?? $_GET['action'] ?? 'state';
+/* Only a POST can change anything: that is where csrf_token is checked. A GET
+ * always reads, whatever action it names. */
+$mmAction = $_POST['action'] ?? 'state';
 try {
     [$mmStatus, $mmBody] = mm_handle($mmAction, $_POST, mm_paths());
 } catch (Throwable $e) {
